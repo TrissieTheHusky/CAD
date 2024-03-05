@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+
+{% block title %}CAD Dashboard{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="container">
+        <div class="columns">
+            <div class="column is-two-thirds">
+                <h1 class="title">CAD Dashboard</h1>
+                <form id="addCallForm" class="box">
+                    <input type="hidden" id="callId" value="">
+                    <div class="field">
+                        <label class="label">Name</label>
+                        <div class="control">
+                            <input class="input" type="text" id="name" placeholder="Enter Name">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="label">Address</label>
+                        <div class="control">
+                            <input class="input" type="text" id="address" placeholder="Enter Address">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="label">Description</label>
+                        <div class="control">
+                            <textarea class="textarea" id="description" placeholder="Enter Description"></textarea>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="label">Status</label>
+                        <div class="control">
+                            <div class="select">
+                                <select id="status">
+                                    <option value="open">Open</option>
+                                    <option value="closed">Closed</option>
+                                    <!-- Add more status options here -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="label">Units</label>
+                        <div class="control">
+                            <input class="input" type="text" id="unit" placeholder="Enter Units (e.g., Unit 1)">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="control">
+                            <button class="button is-primary" id="submitBtn" type="submit">Add Call</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="column">
+                <h2 class="subtitle">Calls</h2>
+                <div id="callContainer" style="overflow-y: auto; max-height: 400px;">
+                    <!-- Call list will be displayed here -->
+                </div>
+                <div class="field">
+                    <label class="label">Search Call by ID</label>
+                    <div class="control">
+                        <input class="input" type="text" id="searchInput" placeholder="Enter Call ID">
+                    </div>
+                </div>
+                <div id="openCallsCount"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<audio id="notificationSound" controls>
+  <source src="notification.mp3" type="audio/mpeg">
+</audio>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Function to display calls
+        function displayCalls(calls) {
+            $('#callContainer').empty(); // Clear previous calls
+            var openCallsCount = 0; // Counter for open calls
+            calls.forEach(call => {
+                $('#callContainer').append(`
+                    <div class="call-item">
+                        <h3>${call.name}</h3>
+                        <p><strong>Address:</strong> ${call.address}</p>
+                        <p><strong>Description:</strong> ${call.description}</p>
+                        <p><strong>Status:</strong> ${call.status}</p>
+                        <p><strong>Units:</strong> ${call.units}</p>
+                        <button class="button is-info is-small update-call-btn" onclick="handleUpdateButtonClick(${call.id})" data-call-id="${call.id}">Update</button>
+                        <button class="button is-danger is-small" onclick="deleteCall(${call.id})">Delete</button>
+                    </div>
+                `);
+                if (call.status === 'open') {
+                    openCallsCount++;
+                }
+            });
+            $('#openCallsCount').text('Open Calls: ' + openCallsCount);
+        }
+
+        // Function to populate form fields with call information
+        function populateForm(call) {
+            $('#callId').val(call.id);
+            $('#name').val(call.name);
+            $('#address').val(call.address);
+            $('#description').val(call.description);
+            $('#status').val(call.status);
+            $('#unit').val(call.units);
+        }
+
+        // Function to handle the "Update" button click
+        function handleUpdateButtonClick(callId) {
+            // Fetch call information by callId
+            $.get(`/get_call/${callId}`, function(call) {
+                populateForm(call); // Populate form fields with call information
+            });
+        }
+
+        // Fetch calls from server
+        function fetchCalls() {
+            $.get('/get_calls', function(data) {
+                displayCalls(data); // Display fetched calls
+            });
+        }
+
+        fetchCalls(); // Initial fetch of calls
+
+        // Form submission handler
+        $('#addCallForm').submit(function(event) {
+            event.preventDefault();
+            var name = $('#name').val();
+            var address = $('#address').val();
+            var description = $('#description').val();
+            var status = $('#status').val();
+            var unit = $('#unit').val();
+            var callId = $('#callId').val(); // Get the call ID from a hidden input field
+            $.ajax({
+                type: callId ? 'PUT' : 'POST', // If callId exists, it's an update operation; otherwise, it's a new call
+                url: callId ? `/update_call/${callId}` : '/add_call',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    name: name,
+                    address: address,
+                    description: description,
+                    status: status,
+                    units: [unit],  // Attach the provided unit to the call
+                    history: [{timestamp: new Date().toISOString(), action: callId ? 'Updated' : 'Created'}], // Initial call creation or update
+                    callId: callId // Include call ID in the data if it's an update operation
+                }),
+                success: function(response) {
+                    alert(response.message);
+                    fetchCalls(); // Request calls again
+                    $('#callId').val(''); // Reset the hidden call ID field
+                    $('#addCallForm')[0].reset(); // Reset form fields
+                },
+                error: function(xhr, status, error) {
+                    alert("Error: " + xhr.responseText);
+                }
+            });
+        });
+    });
+
+    function deleteCall(callId) {
+        if (confirm("Are you sure you want to delete this call?")) {
+            $.ajax({
+                type: 'DELETE',
+                url: `/delete_call/${callId}`,
+                success: function(response) {
+                    alert(response.message);
+                    fetchCalls(); // Request calls again
+                },
+                error: function(xhr, status, error) {
+                    alert("Error: " + xhr.responseText);
+                }
+            });
+        }
+    }
+</script>
+{% endblock %}

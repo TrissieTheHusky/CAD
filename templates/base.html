@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CAD Dashboard{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
+    <style>
+        body {
+            color: #fff;
+            font-family: Arial, sans-serif;
+            font-size: 16px; /* Base font size */
+            line-height: 1.6; /* Line height for better readability */
+        }
+
+        /* Custom CSS for CAD Dashboard */
+        .container {
+            margin-top: 20px;
+        }
+
+        .call-item {
+            margin-bottom: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            color: #fff; /* Dark mode text color */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Shadow effect */
+            transition: background-color 0.3s ease;
+        }
+
+        .call-item:hover {
+            background-color: #00b7ff57; /* Dark mode hover background color */
+        }
+
+        .call-item h3 {
+            margin-bottom: 10px;
+            color: #000000; /* Dark mode header text color */
+            font-size: 1.5rem;
+            line-height: 1.2; /* Adjusted line height for headers */
+        }
+
+        .call-item p {
+            margin-bottom: 5px;
+            color: #000000; /* Dark mode paragraph text color */
+            font-size: 1rem;
+        }
+
+        .call-item button {
+            margin-top: 10px;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 16px;
+            background-color: #ff3860; /* Button color */
+            color: #fff; /* Button text color */
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .call-item button:hover {
+            background-color: #ff679b; /* Button hover color */
+        }
+    </style>
+</head>
+<body>
+    <section class="section">
+        <div class="container">
+            {% block content %}
+            <!-- Content from child templates will be inserted here -->
+            {% endblock %}
+        </div>
+    </section>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    {% block scripts %}
+    <!-- JavaScript code from child templates will be inserted here -->
+    {% endblock %}
+</body>
+</html>
